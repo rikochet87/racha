@@ -11,9 +11,10 @@ function getFrequencyLabel(freq: number): string {
 }
 
 function getCellStyle(days: WindowSize) {
-  if (days === 7) return { width: '13%' as const, paddingVertical: 8, dayFontSize: 9, numFontSize: 12 };
-  if (days === 14) return { width: '13%' as const, paddingVertical: 6, dayFontSize: 8, numFontSize: 10 };
-  return { width: '11%' as const, paddingVertical: 4, dayFontSize: 7, numFontSize: 9 };
+  // 7 días: 7 celdas en 1 fila · 14 días: 7 por fila en 2 filas · 30 días: ~10 por fila
+  if (days === 7) return { width: '13%' as const, paddingVertical: 7, dayFontSize: 9, numFontSize: 13 };
+  if (days === 14) return { width: '13%' as const, paddingVertical: 6, dayFontSize: 8, numFontSize: 11 };
+  return { width: '9%' as const, paddingVertical: 4, dayFontSize: 7, numFontSize: 10 };
 }
 
 function getBarColor(pct: number): string {
@@ -41,6 +42,7 @@ function DayCell({
   date, dateStr, isCompleted, isGrace, cellStyle, cellFilledBg, graceBg, colors, onPress, onLongPress,
 }: DayCellProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const isToday = dateStr === getLocalDateStr(new Date());
 
   const handlePress = () => {
     Animated.sequence([
@@ -60,14 +62,38 @@ function DayCell({
     onPress();
   };
 
-  const bg = isCompleted ? cellFilledBg : isGrace ? graceBg : colors.bg;
-  const borderC = isCompleted ? cellFilledBg : isGrace ? '#f59e0b' : colors.border;
-  const dayColor = isCompleted || isGrace ? 'rgba(255,255,255,0.65)' : colors.light;
-  const numColor = isCompleted || isGrace ? '#fff' : colors.text;
+  // Celdas vacías: fondo gris visible sobre la tarjeta blanca
+  const emptyBg = colors.isLight ? '#f1f5f9' : colors.border;
+  const bg = isCompleted ? cellFilledBg : isGrace ? graceBg : emptyBg;
+
+  // Hoy sin completar: borde de color primario
+  const borderWidth = isToday && !isCompleted && !isGrace ? 1.5 : 0.5;
+  const borderC = isCompleted
+    ? cellFilledBg
+    : isGrace
+      ? '#f59e0b'
+      : isToday
+        ? colors.primary
+        : colors.isLight ? '#e2e8f0' : colors.border;
+
+  const dayColor = isCompleted
+    ? 'rgba(255,255,255,0.7)'
+    : isGrace
+      ? 'rgba(255,255,255,0.7)'
+      : isToday
+        ? colors.primary
+        : colors.light;
+  const numColor = isCompleted
+    ? '#fff'
+    : isGrace
+      ? '#fff'
+      : isToday
+        ? colors.primary
+        : colors.text;
 
   return (
     <TouchableOpacity
-      key={dateStr}
+      style={{ width: cellStyle.width }}
       onPress={handlePress}
       onLongPress={onLongPress}
       delayLongPress={500}
@@ -75,12 +101,11 @@ function DayCell({
     >
       <Animated.View
         style={{
-          width: cellStyle.width,
           paddingVertical: cellStyle.paddingVertical,
           borderRadius: 8,
           alignItems: 'center',
           backgroundColor: bg,
-          borderWidth: 0.5,
+          borderWidth,
           borderColor: borderC,
           marginBottom: 4,
           transform: [{ scale: scaleAnim }],
@@ -93,14 +118,12 @@ function DayCell({
           {date.getDate()}
         </Text>
         {isCompleted && (
-          <Text style={{ fontSize: cellStyle.dayFontSize, marginTop: 1, color: 'rgba(255,255,255,0.7)' }}>
+          <Text style={{ fontSize: cellStyle.dayFontSize, marginTop: 1, color: 'rgba(255,255,255,0.8)' }}>
             ✓
           </Text>
         )}
         {isGrace && !isCompleted && (
-          <Text style={{ fontSize: cellStyle.dayFontSize, marginTop: 1, color: 'rgba(255,255,255,0.8)' }}>
-            ⭐
-          </Text>
+          <Text style={{ fontSize: cellStyle.dayFontSize, marginTop: 1 }}>⭐</Text>
         )}
       </Animated.View>
     </TouchableOpacity>
@@ -197,7 +220,7 @@ export const HabitCard = memo(function HabitCard({
       </View>
 
       {/* Day grid */}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 2 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 3 }}>
         {dates.map((date) => {
           const dateStr = getLocalDateStr(date);
           const isCompleted = habit.completions.some((c) => c.date === dateStr);
