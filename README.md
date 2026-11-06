@@ -122,12 +122,12 @@ Reminders need a native build; they don't fire in Expo Go.
 
 ## License
 
-MIT © 2026 Matías Rosello
+MIT © 2026 Matías Roselló
 
 ---
 
 <div align="center">
 
-**Matías Rosello** · [GitHub](https://github.com/rikochet87) · rosellomatias87@gmail.com
+**Matías Roselló** · [GitHub](https://github.com/rikochet87) · rosellomatias87@gmail.com
 
 </div>
